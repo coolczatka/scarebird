@@ -64,7 +64,7 @@ void incrementInterval(){
   interval+=1000;
 }
 void decrementInterval(){
-  if(interval-1000>0)//if it's takes more then 4 bytes
+  if(interval-1000>0)//if it's takes less then 0
     return;
   interval-=1000;
 }
