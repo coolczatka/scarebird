@@ -1,8 +1,16 @@
+/*
+ *  Bluetooth orders
+ *  -1 - do nothing
+ *  0 - switch off/on
+ *  1 - increment interval
+ *  2 - decrement interval
+ *  3 - volume+
+ *  4 - volume-
+ */
 #include <SD.h>
 #include <Thread.h>
 #include <ThreadController.h>
 #include <TMRpcm.h>
-
 
 #define MISO 11
 #define MOSI 12
@@ -17,6 +25,7 @@
 #define VPLUS_BTN 7
 #define VMINUS_BTN 8
 
+#define DURATION 3 //sec
 void incrementInterval();
 void decrementInterval();
 void button_services();
@@ -25,9 +34,9 @@ void increaseVolume();
 void decreaseVolume();
 
 TMRpcm tmrpcm;
-unsigned long interval=1000;
+unsigned long interval = 1000;
 bool isOn = false;
-unsigned int vol=5;
+unsigned int vol = 5;
 Thread sound = Thread();
 Thread buttons = Thread();
 ThreadController controller = ThreadController();
@@ -41,67 +50,74 @@ void setup() {
   buttons.enabled = true;
   controller.add(&sound);
   controller.add(&buttons);
-  
-  pinMode(ON_OFF_BTN,INPUT);
-  pinMode(INC_INTERVAL_BTN,INPUT);
-  pinMode(DEC_INTERVAL_BTN,INPUT);
-  pinMode(VPLUS_BTN,INPUT);
-  pinMode(VMINUS_BTN,INPUT);
-  if (!SD.begin(4)) 
+
+  pinMode(ON_OFF_BTN, INPUT);
+  pinMode(INC_INTERVAL_BTN, INPUT);
+  pinMode(DEC_INTERVAL_BTN, INPUT);
+  pinMode(VPLUS_BTN, INPUT);
+  pinMode(VMINUS_BTN, INPUT);
+
+  if (!SD.begin(4))
     return; // initialization failed HALT
-  if(!SD.exists("hawk_screaming.wav"))
+  if (!SD.exists("hawk_screaming.wav"))
     return; // there is no correct sound file HALT
   tmrpcm.speakerPin = SPEAKER;
+
+  Serial.begin(9600);
+  while (!Serial.available());
+
 }
 
 void loop() {
   controller.run();
 }
 
-void incrementInterval(){
-  if(interval+1000>0xFFFFFFFF)//if it's takes more then 4 bytes
+void incrementInterval() {
+  if (interval + 1000 > 0xFFFFFFFF) //if it's takes more then 4 bytes
     return;
-  interval+=1000;
+  interval += 1000;
 }
-void decrementInterval(){
-  if(interval-1000>0)//if it's takes more then 4 bytes
+void decrementInterval() {
+  if (interval - 1000 > 0) //if it's takes more then 4 bytes
     return;
-  interval-=1000;
+  interval -= 1000;
 }
-void troggleState(){
-  isOn=!isOn;
+void troggleState() {
+  isOn = !isOn;
 }
-void increaseVolume(){
+void increaseVolume() {
   ++vol;
   tmrpcm.setVolume(vol);
 }
-void decreaseVolume(){
+void decreaseVolume() {
   --vol;
   tmrpcm.setVolume(vol);
 }
 
-void button_services(){
-  if(ON_OFF_BTN==0){
-    isOn=!isOn;
+void button_services() {
+  int bt_order;
+  bt_order = Serial.read();
+  if (ON_OFF_BTN == 0 || bt_order == 0) {
+    isOn = !isOn;
   }
-  if(INC_INTERVAL_BTN==0){
+  if (INC_INTERVAL_BTN == 0 || bt_order == 1) {
     incrementInterval();
   }
-  if(DEC_INTERVAL_BTN==0){
+  if (DEC_INTERVAL_BTN == 0 || bt_order == 2) {
     decrementInterval();
   }
-  if(VPLUS_BTN==0){
+  if (VPLUS_BTN == 0 || bt_order == 3) {
     increaseVolume();
   }
-  if(VMINUS_BTN==0){
+  if (VMINUS_BTN == 0 || bt_order == 4) {
     decreaseVolume();
   }
 }
 
-void play_sound(){
-  if(isOn){
-  tmrpcm.play("hawk_screaming.wav",2);
-  delay(interval*60);
+void play_sound() {
+  if (isOn) {
+    tmrpcm.play("hawk_screaming.wav", DURATION);
+    delay(interval * 60);
   }
 }
 
