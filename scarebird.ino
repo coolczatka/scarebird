@@ -77,8 +77,13 @@ void incrementInterval() {
     return;
   interval += 1000;
 }
+<<<<<<< HEAD
 void decrementInterval() {
   if (interval - 1000 > 0) //if it's takes more then 4 bytes
+=======
+void decrementInterval(){
+  if(interval-1000>0)//if it's takes less then 0
+>>>>>>> c9f18251a50335ee39d50d6d7384848fe1be8e5a
     return;
   interval -= 1000;
 }
